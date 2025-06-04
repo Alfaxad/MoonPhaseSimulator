@@ -21,13 +21,30 @@ def dark_side_finder(angle):
 
 
 def terminus_side_finder(angle):
-    if 0 < angle <= 90:
+    """Return the illuminated side of the terminator.
+
+    Parameters
+    ----------
+    angle : float
+        The angular position in degrees. Values outside the ``0-360`` range
+        are normalised so that negative angles or multiples of ``360`` are
+        correctly mapped.
+
+    Returns
+    -------
+    str
+        ``"left"`` or ``"right"`` depending on the quadrant. ``0`` degrees is
+        considered ``"right"`` so that a new moon still yields a valid side.
+    """
+
+    normalised = angle % 360
+    if 0 <= normalised <= 90:
         return "right"
-    elif 90 < angle <= 180:
+    elif 90 < normalised <= 180:
         return "left"
-    elif 180 < angle <= 270:
+    elif 180 < normalised <= 270:
         return "right"
-    elif 270 < angle <= 360:
+    else:
         return "left"
 
 
@@ -61,43 +78,40 @@ def ellipse_x_generator(y, r, angle):
     return abs(r * cos(radian_angle) * sqrt(1 - (y / r) ** 2))
 
 
-# Dealing with the moon(circle)
-y = list(range(-radius, (radius + 1)))
-circle_x_positive = []
-circle_x_negative = []
+def simulate_moon_phase(days):
+    """Generate a matplotlib figure for the given number of days."""
+    y = list(range(-radius, radius + 1))
+    circle_x_positive = [circle_x_generator(num, radius) for num in y]
+    circle_x_negative = [-num for num in circle_x_positive]
 
-for num in y:
-    circle_x_positive.append(circle_x_generator(num, radius))
-for num in circle_x_positive:
-    circle_x_negative.append(-num)
+    fig, ax = plt.subplots()
+    ax.plot(y, circle_x_positive, color="black")
+    ax.plot(y, circle_x_negative, color="black")
+    ax.axis("square")
 
-plt.plot(y, circle_x_positive, color="black")
-plt.plot(y, circle_x_negative, color="black")
-plt.axis("square")
+    turn_angle = turn_angle_finder(days)
+    terminus_side = terminus_side_finder(turn_angle)
+    dark_side = dark_side_finder(turn_angle)
 
-# Getting user input for the days and finding initial values
-days = float(input("Enter the number of days since new moon: "))
-turn_angle = turn_angle_finder(days)
-terminus_side = terminus_side_finder(turn_angle)
-dark_side = dark_side_finder(turn_angle)
+    ellipse_x = []
+    if terminus_side == "right":
+        ellipse_x = [ellipse_x_generator(num, radius, turn_angle) for num in y]
+    elif terminus_side == "left":
+        ellipse_x = [-ellipse_x_generator(num, radius, turn_angle) for num in y]
 
-# Dealing with the terminus(ellipse)
-ellipse_x = []
-if terminus_side == "right":
-    for num in y:
-        ellipse_x.append(ellipse_x_generator(num, radius, turn_angle))
-elif terminus_side == "left":
-    for num in y:
-        ellipse_x.append(-ellipse_x_generator(num, radius, turn_angle))
+    if ellipse_x:
+        ax.plot(ellipse_x, y, color="black")
 
-plt.plot(ellipse_x, y, color="black")
+    if dark_side == "right":
+        ax.fill_betweenx(y, circle_x_positive, ellipse_x, facecolor="grey")
+    elif dark_side == "left":
+        ax.fill_betweenx(y, circle_x_negative, ellipse_x, facecolor="grey")
 
-# Dealing with the moon shading(dark side)
-if dark_side == "right":
-    plt.fill_betweenx(y, circle_x_positive, ellipse_x, facecolor="grey")
-elif dark_side == "left":
-    plt.fill_betweenx(y, circle_x_negative, ellipse_x, facecolor="grey")
+    ax.set_title("Moon phase: " + phase_teller(turn_angle))
+    return fig, ax
 
-title = "Moon phase: " + phase_teller(turn_angle)
-plt.title(title)
-plt.show()
+
+if __name__ == "__main__":
+    days = float(input("Enter the number of days since new moon: "))
+    simulate_moon_phase(days)
+    plt.show()
