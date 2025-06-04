@@ -1,3 +1,5 @@
+"""Moon phase simulator with optional animation of a full lunar cycle."""
+
 import argparse
 from math import radians, sqrt, cos
 from matplotlib import pyplot as plt
@@ -13,15 +15,18 @@ CIRCLE_X_NEGATIVE = [-xx for xx in CIRCLE_X_POSITIVE]
 
 
 def turn_angle_finder(days_num, period=DEFAULT_PERIOD):
+    """Return the Moon's angle in degrees at a given day of the cycle."""
     angle = (360 / period) * days_num
     return angle % 360
 
 
 def dark_side_finder(angle):
+    """Which side of the Moon is dark at a given angle."""
     return "left" if angle < 180 else "right"
 
 
 def terminus_side_finder(angle):
+    """Determine whether the terminator is on the left or right."""
     if 0 < angle <= 90:
         return "right"
     if 90 < angle <= 180:
@@ -32,6 +37,7 @@ def terminus_side_finder(angle):
 
 
 def phase_teller(angle):
+    """Return the textual moon phase for a given angle."""
     if angle in (0, 360):
         return "New Moon"
     if angle == 90:
@@ -50,11 +56,13 @@ def phase_teller(angle):
 
 
 def ellipse_x_generator(y_val, r, angle):
+    """X-coordinate of the terminator for a given y value and angle."""
     radian_angle = radians(angle)
     return abs(r * cos(radian_angle) * sqrt(1 - (y_val / r) ** 2))
 
 
 def plot_single_phase(days, period):
+    """Plot the moon phase for a single day."""
     angle = turn_angle_finder(days, period)
     terminus_side = terminus_side_finder(angle)
     dark_side = dark_side_finder(angle)
@@ -80,6 +88,7 @@ def plot_single_phase(days, period):
 
 
 def animate_cycle(cycle_days=30, period=DEFAULT_PERIOD, interval=300):
+    """Animate moon phases over an entire cycle."""
     fig, ax = plt.subplots()
 
     def update(frame):

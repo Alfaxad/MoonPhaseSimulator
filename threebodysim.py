@@ -1,3 +1,6 @@
+"""Three-body gravitational simulation using matplotlib animation."""
+
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -45,26 +48,35 @@ def step(bodies, dt):
         body.velocity += a * dt / 2
 
 
-fig, ax = plt.subplots()
-ax.set_aspect("equal")
-limit = 20
-ax.set_xlim(-limit, limit)
-ax.set_ylim(-limit, limit)
-points = [ax.plot([], [], "o", color=b.color)[0] for b in bodies]
+def simulate(steps=STEPS, dt=DT, limit=20):
+    """Run the animated three-body simulation."""
+
+    fig, ax = plt.subplots()
+    ax.set_aspect("equal")
+    ax.set_xlim(-limit, limit)
+    ax.set_ylim(-limit, limit)
+    points = [ax.plot([], [], "o", color=b.color)[0] for b in bodies]
+
+    def init():
+        for p in points:
+            p.set_data([], [])
+        return points
+
+    def update(frame):
+        step(bodies, dt)
+        for p, b in zip(points, bodies):
+            p.set_data(b.position[0], b.position[1])
+        return points
+
+    FuncAnimation(fig, update, frames=range(steps), init_func=init, blit=True, interval=20)
+    plt.show()
 
 
-def init():
-    for p in points:
-        p.set_data([], [])
-    return points
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Three-body gravitational simulation")
+    parser.add_argument("--steps", type=int, default=STEPS, help="Number of animation frames")
+    parser.add_argument("--dt", type=float, default=DT, help="Time step for integration")
+    parser.add_argument("--limit", type=float, default=20.0, help="Axis limit for plotting")
+    args = parser.parse_args()
 
-
-def update(frame):
-    step(bodies, DT)
-    for p, b in zip(points, bodies):
-        p.set_data(b.position[0], b.position[1])
-    return points
-
-
-ani = FuncAnimation(fig, update, frames=range(STEPS), init_func=init, blit=True, interval=20)
-plt.show()
+    simulate(args.steps, args.dt, args.limit)
