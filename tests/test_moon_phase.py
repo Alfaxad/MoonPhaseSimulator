@@ -58,7 +58,9 @@ def test_phase_teller(mps_module):
 
 def test_terminus_side_finder(mps_module):
     mps = mps_module
-    assert mps.terminus_side_finder(0) is None
+    # For a new moon (angle 0) the terminator coincides with the
+    # circumference and is treated as being on the right.
+    assert mps.terminus_side_finder(0) == "right"
     assert mps.terminus_side_finder(90) == "right"
     assert mps.terminus_side_finder(180) == "left"
     assert mps.terminus_side_finder(270) == "right"
