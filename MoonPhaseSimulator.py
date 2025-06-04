@@ -1,103 +1,126 @@
-from matplotlib import pyplot as plt
+import argparse
 from math import radians, sqrt, cos
+from matplotlib import pyplot as plt
+from matplotlib.animation import FuncAnimation
 
-time_period = 29.5
-radius = 100
+# Default lunar cycle period in days
+DEFAULT_PERIOD = 29.5
+RADIUS = 100
+
+y = list(range(-RADIUS, RADIUS + 1))
+CIRCLE_X_POSITIVE = [sqrt(RADIUS ** 2 - yy ** 2) for yy in y]
+CIRCLE_X_NEGATIVE = [-xx for xx in CIRCLE_X_POSITIVE]
 
 
-def turn_angle_finder(days_num):
-    angle = (360 / time_period) * days_num
-    if angle < 360:
-        return angle
-    else:
-        return angle % 360
+def turn_angle_finder(days_num, period=DEFAULT_PERIOD):
+    angle = (360 / period) * days_num
+    return angle % 360
 
 
 def dark_side_finder(angle):
-    if angle < 180:
-        return "left"
-    else:
-        return "right"
+    return "left" if angle < 180 else "right"
 
 
 def terminus_side_finder(angle):
     if 0 < angle <= 90:
         return "right"
-    elif 90 < angle <= 180:
+    if 90 < angle <= 180:
         return "left"
-    elif 180 < angle <= 270:
+    if 180 < angle <= 270:
         return "right"
-    elif 270 < angle <= 360:
-        return "left"
+    return "left"
 
 
 def phase_teller(angle):
-    if angle == 0 or angle == 360:
+    if angle in (0, 360):
         return "New Moon"
-    elif angle == 90:
+    if angle == 90:
         return "First Quarter"
-    elif angle == 180:
+    if angle == 180:
         return "Full Moon"
-    elif angle == 270:
+    if angle == 270:
         return "Last Quarter"
-    elif 0 < angle < 90:
+    if 0 < angle < 90:
         return "Waxing Crescent"
-    elif 90 < angle < 180:
+    if 90 < angle < 180:
         return "Waxing Gibbous"
-    elif 180 < angle < 270:
+    if 180 < angle < 270:
         return "Waning Gibbous"
-    elif 270 < angle < 360:
-        return "Waning Crescent"
+    return "Waning Crescent"
 
 
-# A function for finding the x coordinates of the moon
-def circle_x_generator(y, r):
-    return sqrt(r ** 2 - y ** 2)
-
-
-# A function for finding the x coordinates of the moon's terminus
-def ellipse_x_generator(y, r, angle):
+def ellipse_x_generator(y_val, r, angle):
     radian_angle = radians(angle)
-    return abs(r * cos(radian_angle) * sqrt(1 - (y / r) ** 2))
+    return abs(r * cos(radian_angle) * sqrt(1 - (y_val / r) ** 2))
 
 
-# Dealing with the moon(circle)
-y = list(range(-radius, (radius + 1)))
-circle_x_positive = []
-circle_x_negative = []
+def plot_single_phase(days, period):
+    angle = turn_angle_finder(days, period)
+    terminus_side = terminus_side_finder(angle)
+    dark_side = dark_side_finder(angle)
 
-for num in y:
-    circle_x_positive.append(circle_x_generator(num, radius))
-for num in circle_x_positive:
-    circle_x_negative.append(-num)
+    ellipse_x = [
+        ellipse_x_generator(yy, RADIUS, angle) if terminus_side == "right" else -ellipse_x_generator(yy, RADIUS, angle)
+        for yy in y
+    ]
 
-plt.plot(y, circle_x_positive, color="black")
-plt.plot(y, circle_x_negative, color="black")
-plt.axis("square")
+    fig, ax = plt.subplots()
+    ax.plot(y, CIRCLE_X_POSITIVE, color="black")
+    ax.plot(y, CIRCLE_X_NEGATIVE, color="black")
+    ax.plot(ellipse_x, y, color="black")
 
-# Getting user input for the days and finding initial values
-days = float(input("Enter the number of days since new moon: "))
-turn_angle = turn_angle_finder(days)
-terminus_side = terminus_side_finder(turn_angle)
-dark_side = dark_side_finder(turn_angle)
+    if dark_side == "right":
+        ax.fill_betweenx(y, CIRCLE_X_POSITIVE, ellipse_x, facecolor="grey")
+    else:
+        ax.fill_betweenx(y, CIRCLE_X_NEGATIVE, ellipse_x, facecolor="grey")
 
-# Dealing with the terminus(ellipse)
-ellipse_x = []
-if terminus_side == "right":
-    for num in y:
-        ellipse_x.append(ellipse_x_generator(num, radius, turn_angle))
-elif terminus_side == "left":
-    for num in y:
-        ellipse_x.append(-ellipse_x_generator(num, radius, turn_angle))
+    ax.set_aspect("equal", "box")
+    ax.set_title(f"Moon phase: {phase_teller(angle)}")
+    plt.show()
 
-plt.plot(ellipse_x, y, color="black")
 
-# Dealing with the moon shading(dark side)
-if dark_side == "right":
-    plt.fill_betweenx(y, circle_x_positive, ellipse_x, facecolor="grey")
-elif dark_side == "left":
-    plt.fill_betweenx(y, circle_x_negative, ellipse_x, facecolor="grey")
+def animate_cycle(cycle_days=30, period=DEFAULT_PERIOD, interval=300):
+    fig, ax = plt.subplots()
 
-title = "Moon phase: " + phase_teller(turn_angle)
-plt.title(title)
-plt.show()
+    def update(frame):
+        ax.clear()
+        angle = turn_angle_finder(frame, period)
+        terminus_side = terminus_side_finder(angle)
+        dark_side = dark_side_finder(angle)
+        ellipse_x = [
+            ellipse_x_generator(yy, RADIUS, angle) if terminus_side == "right" else -ellipse_x_generator(yy, RADIUS, angle)
+            for yy in y
+        ]
+        ax.plot(y, CIRCLE_X_POSITIVE, color="black")
+        ax.plot(y, CIRCLE_X_NEGATIVE, color="black")
+        ax.plot(ellipse_x, y, color="black")
+        if dark_side == "right":
+            ax.fill_betweenx(y, CIRCLE_X_POSITIVE, ellipse_x, facecolor="grey")
+        else:
+            ax.fill_betweenx(y, CIRCLE_X_NEGATIVE, ellipse_x, facecolor="grey")
+        ax.set_aspect("equal", "box")
+        ax.set_xlim(-RADIUS, RADIUS)
+        ax.set_ylim(-RADIUS, RADIUS)
+        ax.set_title(f"Day {frame}: {phase_teller(angle)}")
+        ax.axis('off')
+
+    ani = FuncAnimation(fig, update, frames=range(cycle_days), interval=interval, repeat=True)
+    plt.show()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Moon phase simulator")
+    parser.add_argument("--days", type=float, help="Days since new moon to display")
+    parser.add_argument("--animate", action="store_true", help="Animate an entire lunar cycle")
+    parser.add_argument("--cycle", type=int, default=30, help="Number of days in the animated cycle")
+    parser.add_argument("--period", type=float, default=DEFAULT_PERIOD, help="Length of lunar cycle in days")
+    args = parser.parse_args()
+
+    if args.animate:
+        animate_cycle(args.cycle, args.period)
+    else:
+        if args.days is None:
+            days = float(input("Enter the number of days since new moon: "))
+        else:
+            days = args.days
+        plot_single_phase(days, args.period)
