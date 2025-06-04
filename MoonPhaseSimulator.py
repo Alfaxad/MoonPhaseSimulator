@@ -21,7 +21,13 @@ def dark_side_finder(angle):
 
 
 def terminus_side_finder(angle):
-    if 0 < angle <= 90:
+    """Return the side on which the terminator should be drawn."""
+    # When angle is 0 (new moon) the terminator coincides with the
+    # circumference of the moon. In this case we treat it as being on the
+    # right so that the full disc is shaded correctly.
+    if angle == 0:
+        return "right"
+    elif 0 < angle <= 90:
         return "right"
     elif 90 < angle <= 180:
         return "left"
