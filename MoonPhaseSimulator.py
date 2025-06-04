@@ -55,7 +55,7 @@ def circle_x_generator(y, r):
     return sqrt(r ** 2 - y ** 2)
 
 
-# A function for finding the x coordinates of the moon's terminus
+# A function for finding the x coordinates of the moon’s terminator.
 def ellipse_x_generator(y, r, angle):
     radian_angle = radians(angle)
     return abs(r * cos(radian_angle) * sqrt(1 - (y / r) ** 2))
