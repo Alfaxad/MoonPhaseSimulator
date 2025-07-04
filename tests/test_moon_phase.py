@@ -65,3 +65,17 @@ def test_terminus_side_finder(mps_module):
     assert mps.terminus_side_finder(180) == "left"
     assert mps.terminus_side_finder(270) == "right"
     assert mps.terminus_side_finder(360) == "left"
+
+
+def test_illumination_fraction(mps_module):
+    mps = mps_module
+    assert mps.illumination_fraction(0) == pytest.approx(0.0)
+    assert mps.illumination_fraction(7.375) == pytest.approx(0.5)
+    assert mps.illumination_fraction(14.75) == pytest.approx(1.0)
+
+
+def test_days_until_next_full_moon(mps_module):
+    mps = mps_module
+    assert mps.days_until_next_full_moon(0) == pytest.approx(14.75)
+    assert mps.days_until_next_full_moon(14.75) == pytest.approx(0.0)
+    assert mps.days_until_next_full_moon(20) == pytest.approx(24.25)

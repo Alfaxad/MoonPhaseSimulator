@@ -27,6 +27,14 @@ To watch the entire lunar cycle animated over 29.5 days:
 python -c "import MoonPhaseSimulator as mps; mps.animate_moon_cycle()"
 ```
 
+Additional helper functions are available for programmatic use:
+
+```python
+import MoonPhaseSimulator as mps
+mps.illumination_fraction(7)      # fraction illuminated after 7 days
+mps.days_until_next_full_moon(10) # time until the next full moon
+```
+
 Run the three body simulation with:
 
 ```bash

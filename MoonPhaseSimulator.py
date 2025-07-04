@@ -59,6 +59,18 @@ def phase_teller(angle):
         return "Waning Crescent"
 
 
+def illumination_fraction(days):
+    """Return the fraction of the Moon illuminated for ``days`` since new moon."""
+    angle = np.radians(turn_angle_finder(days))
+    return 0.5 * (1 - np.cos(angle))
+
+
+def days_until_next_full_moon(days):
+    """Return the number of days until the next full moon."""
+    days_mod = days % time_period
+    return (time_period / 2 - days_mod) % time_period
+
+
 # A function for finding the x coordinates of the moon
 def circle_x_generator(y, r):
     return sqrt(r ** 2 - y ** 2)
